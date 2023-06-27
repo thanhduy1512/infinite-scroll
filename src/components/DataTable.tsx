@@ -30,8 +30,6 @@ const DataTable = () => {
     const { scrollTop, scrollHeight, clientHeight } = tableRef?.current;
     const reachedBottom = scrollTop + clientHeight === scrollHeight;
     if (reachedBottom) {
-      console.log('reached bottom');
-
       getProducts(20, products.length);
     }
   };
@@ -58,7 +56,6 @@ const DataTable = () => {
     });
 
     if (value === '') {
-      console.log('empty');
       setProducts(productsBeforeSearch);
       setProductsBeforeSearch([]);
       return;
