@@ -19,29 +19,32 @@ interface Product {
 
 const DataTable = () => {
   const tableRef = useRef(null);
-
   const [products, setProducts] = useState<Product[]>([]);
+
   const onTableScroll = (event: any) => {
     if (!tableRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = tableRef?.current;
     const reachedBottom = scrollTop + clientHeight === scrollHeight;
     if (reachedBottom) {
       console.log('reached bottom');
+
+      getProducts(20, products.length);
     }
   };
 
-  const getProducts = async () => {
+  const getProducts = async (limit: number, skip: number) => {
     const data = await axiosInstance.get('', {
       params: {
-        limit: 20,
-        skip: 0,
+        limit,
+        skip,
       },
     });
-    setProducts(data.data.products);
+    if (products.length === 0) setProducts(data.data.products);
+    else setProducts([...products, ...data.data.products]);
   };
 
   useEffect(() => {
-    getProducts();
+    getProducts(20, 0);
   }, []);
 
   return (
