@@ -11,6 +11,7 @@ import axiosInstance from '../api/axios';
 interface Product {
   id: number;
   brand: string;
+  title: string;
   category: string;
   description: string;
   price: number;
@@ -20,6 +21,9 @@ interface Product {
 const DataTable = () => {
   const tableRef = useRef(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsBeforeSearch, setProductsBeforeSearch] = useState<Product[]>(
+    []
+  );
 
   const onTableScroll = (event: any) => {
     if (!tableRef.current) return;
@@ -43,6 +47,25 @@ const DataTable = () => {
     else setProducts([...products, ...data.data.products]);
   };
 
+  const onInputSearch = async (event: any) => {
+    if (productsBeforeSearch.length === 0) setProductsBeforeSearch(products);
+
+    const { value } = event.target;
+    const data = await axiosInstance.get('search', {
+      params: {
+        q: value,
+      },
+    });
+
+    if (value === '') {
+      console.log('empty');
+      setProducts(productsBeforeSearch);
+      setProductsBeforeSearch([]);
+      return;
+    }
+    setProducts(data.data.products);
+  };
+
   useEffect(() => {
     getProducts(20, 0);
   }, []);
@@ -50,6 +73,10 @@ const DataTable = () => {
   return (
     <div>
       <h1>DataTable</h1>
+      <div style={{ margin: '20px 0 20px 0' }}>
+        <label>Search</label>
+        <input onChange={onInputSearch} />
+      </div>
       <TableContainer
         style={{ overflowY: 'scroll', height: 600 }}
         component={Paper}
@@ -60,6 +87,7 @@ const DataTable = () => {
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
+              <TableCell align="right">Title</TableCell>
               <TableCell align="right">Brand</TableCell>
               <TableCell align="right">Category</TableCell>
               <TableCell align="right">Description</TableCell>
@@ -70,12 +98,13 @@ const DataTable = () => {
           <TableBody>
             {products.map((row) => (
               <TableRow
-                key={row.id + row.brand}
+                key={row.id + row.title + row.description}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
               >
                 <TableCell component="th" scope="row">
                   {row.id}
                 </TableCell>
+                <TableCell align="right">{row.title}</TableCell>
                 <TableCell align="right">{row.brand}</TableCell>
                 <TableCell align="right">{row.category}</TableCell>
                 <TableCell align="right">{row.description}</TableCell>
