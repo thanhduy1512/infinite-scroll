@@ -1,23 +1,17 @@
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import axiosInstance from '../api/axios';
-import SearchBar from './SearchBar';
+import { useEffect, useRef, useState } from 'react';
+import {
+  TableContainer,
+  Paper,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+} from '@mui/material';
 
-interface Product {
-  id: number;
-  brand: string;
-  title: string;
-  category: string;
-  description: string;
-  price: number;
-  images: string[];
-}
+import axiosInstance from '../api/axios';
+import { Product } from '../interfaces/Product';
+import SearchBar from './SearchBar';
 
 const DataTable = () => {
   const tableRef = useRef(null);
@@ -47,20 +41,6 @@ const DataTable = () => {
     else setProducts([...products, ...data.data.products]);
   };
 
-  const onInputSearch = async (event: ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    const data = await axiosInstance.get('search', {
-      params: {
-        q: value,
-      },
-    });
-
-    setFilteredProducts(data.data.products);
-    if (value === '') {
-      setFilteredProducts([]);
-    }
-  };
-
   useEffect(() => {
     //initial fetch
     if (products.length === 0) getProducts(LIMIT, 0);
@@ -76,9 +56,9 @@ const DataTable = () => {
   return (
     <div>
       <h1>Products Table</h1>
-      <SearchBar onInputSearch={onInputSearch} />
+      <SearchBar setFilteredProducts={setFilteredProducts} />
       <TableContainer
-        style={{ overflowY: 'scroll', height: '80vh' }}
+        style={{ overflowY: 'auto', height: '80vh' }}
         component={Paper}
         onScroll={onTableScroll}
         ref={tableRef}
