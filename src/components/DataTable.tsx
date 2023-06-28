@@ -5,8 +5,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import axiosInstance from '../api/axios';
+import SearchBar from './SearchBar';
 
 interface Product {
   id: number;
@@ -20,17 +21,18 @@ interface Product {
 
 const DataTable = () => {
   const tableRef = useRef(null);
+  const LIMIT = 20;
+  const [showingProducts, setShowingProducts] = useState<Product[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [productsBeforeSearch, setProductsBeforeSearch] = useState<Product[]>(
-    []
-  );
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
-  const onTableScroll = (event: any) => {
+  const onTableScroll = () => {
     if (!tableRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = tableRef?.current;
-    const reachedBottom = scrollTop + clientHeight === scrollHeight;
-    if (reachedBottom) {
-      getProducts(20, products.length);
+    const reachedBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight;
+
+    if (reachedBottom && filteredProducts.length === 0) {
+      getProducts(LIMIT, products.length);
     }
   };
 
@@ -45,9 +47,7 @@ const DataTable = () => {
     else setProducts([...products, ...data.data.products]);
   };
 
-  const onInputSearch = async (event: any) => {
-    if (productsBeforeSearch.length === 0) setProductsBeforeSearch(products);
-
+  const onInputSearch = async (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     const data = await axiosInstance.get('search', {
       params: {
@@ -55,27 +55,30 @@ const DataTable = () => {
       },
     });
 
+    setFilteredProducts(data.data.products);
     if (value === '') {
-      setProducts(productsBeforeSearch);
-      setProductsBeforeSearch([]);
-      return;
+      setFilteredProducts([]);
     }
-    setProducts(data.data.products);
   };
 
   useEffect(() => {
-    getProducts(20, 0);
-  }, []);
+    //initial fetch
+    if (products.length === 0) getProducts(LIMIT, 0);
+
+    //filtering
+    if (filteredProducts.length === 0) {
+      setShowingProducts(products);
+    } else {
+      setShowingProducts(filteredProducts);
+    }
+  }, [filteredProducts, products]);
 
   return (
     <div>
-      <h1>DataTable</h1>
-      <div style={{ margin: '20px 0 20px 0' }}>
-        <label>Search</label>
-        <input onChange={onInputSearch} />
-      </div>
+      <h1>Products Table</h1>
+      <SearchBar onInputSearch={onInputSearch} />
       <TableContainer
-        style={{ overflowY: 'scroll', height: 600 }}
+        style={{ overflowY: 'scroll', height: '80vh' }}
         component={Paper}
         onScroll={onTableScroll}
         ref={tableRef}
@@ -93,7 +96,7 @@ const DataTable = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((row) => (
+            {showingProducts.map((row) => (
               <TableRow
                 key={row.id + row.title + row.description}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
